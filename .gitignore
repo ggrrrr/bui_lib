@@ -1,0 +1,7 @@
+.*
+!.gitignore
+advent
+!kubernetes/advent
+tmp.yaml
+# jwt.key
+# jwt.crt
