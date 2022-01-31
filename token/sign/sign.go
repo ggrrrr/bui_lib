@@ -38,7 +38,7 @@ func SignKey(claims token.ApiClaims, ctx context.Context) (string, error) {
 	if claims.Subject == "" {
 		return "", fmt.Errorf("claim.Subject is missing")
 	}
-	ttl := 1000 * time.Second
+	ttl := token.TokenTTL
 	claims.ExpiresAt = jwt.NewNumericDate(time.Now().UTC().Add(ttl))
 	claims.ID = token.CreateClaimId(ctx)
 	log.Printf("Sign: %+v", claims)

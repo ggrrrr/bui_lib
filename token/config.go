@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/ggrrrr/bui_lib/config"
 	"github.com/golang-jwt/jwt/v4"
@@ -12,7 +13,7 @@ import (
 )
 
 const (
-	JWT_TTL_MIN     = "jwt.ttl.min"
+	JWT_TTL         = "jwt.ttl"
 	JWT_KEY_FILE    = "jwt.key.file"
 	JWT_CRT_FILE    = "jwt.crt.file"
 	JWT_CA_FILE     = "jwt.ca.file"
@@ -23,15 +24,15 @@ var (
 
 	// openssl genrsa -out jwt.key 512
 	// openssl rsa -in jwt.key -pubout > jwt.crt
-	verifyKey   *rsa.PublicKey
-	SignMethod  string
-	TokenTTLMin int
+	verifyKey  *rsa.PublicKey
+	SignMethod string
+	TokenTTL   time.Duration
 
 	envParamsDefaults = []config.ParamValue{
 		{
-			Name:     JWT_TTL_MIN,
-			Info:     "JWT ttl in minutes,",
-			DefValue: "60",
+			Name:     JWT_TTL,
+			Info:     "JWT ttl in minutes 10s, 60m 1h",
+			DefValue: "60m",
 		},
 		{
 			Name:     JWT_KEY_FILE,
@@ -55,12 +56,17 @@ var (
 	}
 )
 
+func init() {
+
+	TokenTTL = 20 * time.Second
+}
+
 func Configure() error {
 	var err error
 	config.Configure(envParamsDefaults)
 	crtFile := viper.GetString(JWT_CRT_FILE)
 	SignMethod = viper.GetString(JWT_SIGN_METHOD)
-	TokenTTLMin = viper.GetInt(JWT_TTL_MIN)
+	jwtD := viper.GetString(JWT_TTL)
 	// signAlg := jwt.GetAlgorithms()
 	if err := jwt.GetSigningMethod(SignMethod); err == nil {
 		log.Printf("JWT_SIGN_METHOD: SignMethod %v", err)
@@ -79,7 +85,9 @@ func Configure() error {
 		fmt.Println(config.Help())
 		return fmt.Errorf("unable to use:%s: %v", crtFile, JWT_KEY_FILE)
 	}
-	return nil
+	TokenTTL, err = time.ParseDuration(jwtD)
+
+	return err
 }
 
 type ApiClaims struct {
